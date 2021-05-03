@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const log = console.log
 const validator = require('validator')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 const userSchema = mongoose.Schema(
     {
@@ -40,7 +41,13 @@ const userSchema = mongoose.Schema(
                     throw new Error('Password invalid')
                 }
             }
-        }
+        },
+        tokens : [{
+            token:{
+                type : String,
+                required : true
+            }
+        }]
     }
 )
 
@@ -62,6 +69,15 @@ userSchema.statics.findByEmail = async (email, password) => {
 
     //log(user)
     return user
+}
+
+userSchema.methods.getAuthToken = async function(_id) {
+    const token = jwt.sign({ _id: this._id.toString()},'Aakash')
+    log(token)
+    this.tokens = this.tokens.concat({token})
+    await this.save()
+
+    return token
 }
 
 userSchema.pre('save', async function(next) {

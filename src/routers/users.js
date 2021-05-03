@@ -30,10 +30,10 @@ app.get('/users/:id', async (req,res) => {
 app.post('/users', async (req,res) => {
 
     const user = new User(req.body)
-    
+    const token = await user.getAuthToken()
     try{
         await user.save()
-        res.send(user)
+        res.send(user,token)
     } catch (e){
         res.status(400).send(e)
     }
@@ -86,7 +86,9 @@ app.post('/users/login', async (req,res) => {
     //log(req.body.email, req.body.password)
     try{
         const user = await User.findByEmail(req.body.email, req.body.password)
-        res.send(user)
+        const token = await user.getAuthToken()
+        //log(token)
+        res.send({user,token})
     } catch (e) {
         res.status(400).send(e)
     }
