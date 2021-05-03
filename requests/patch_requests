@@ -1,0 +1,17 @@
+1) Update User Details
+
+    request : localhost:3000/users/609006bd01187fb842fcfa4e
+    body : {
+                "name": "Aakash",
+                "email": "aakash.shah.2401@gmail.com",
+                "password": "aakash4321"
+            }
+
+
+1) Update Task Details
+
+    request : localhost:3000/tasks/60901cf1eeb1d2bb9f8070d3
+    body : {
+                "description" : "Study for LAMP and Deep Learning Test",
+                "completed" : true
+            }

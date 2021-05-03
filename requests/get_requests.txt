@@ -1,0 +1,18 @@
+1) For Listing all users
+
+    localhost:3000/users
+
+
+2) For getting user details by Id
+
+    localhost:3000/users/609006bd01187fb842fcfa4e
+
+3) List all Tasks
+
+    localhost:3000/tasks
+
+4) Get details of a Task by Id
+
+    localhost:3000/tasks/60901cf1eeb1d2bb9f8070d3
+
+

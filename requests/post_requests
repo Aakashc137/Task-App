@@ -1,0 +1,24 @@
+1) Create a task
+
+    request : localhost:3000/tasks
+    body : {
+                "description" : "Study for LAMP and Deep Learning Test",
+                "completed" : false
+            }
+
+2) Create a user
+
+    request : localhost:3000/users
+    body : {
+                "name": "Aakash",
+                "email": "aakash.shah.2401@gmail.com",
+                "password": "aakash1234"
+            }
+
+3) User Login
+
+    request : localhost:3000/users/login
+    body : {
+                "email" : "aakash.shah.2401@gmail.com",
+                "password" : "aakash1234"
+            }

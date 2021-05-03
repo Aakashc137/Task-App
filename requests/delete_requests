@@ -1,0 +1,8 @@
+1) Delete a User By Id
+
+    localhost:3000/users/609006bd01187fb842fcfa4e
+
+
+2) Delete a task By Id
+
+    localhost:3000/tasks/60901cf1eeb1d2bb9f8070d3
