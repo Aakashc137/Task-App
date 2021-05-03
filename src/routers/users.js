@@ -9,15 +9,14 @@ app.get('/users', async (req,res) => {
        const user =  await User.find({})
         res.send(user)
     } catch (e) {
-        res.send(e)
+        res.status(400).send(e)
     }
 })
-
 
 //Get Users By Id
 app.get('/users/:id', async (req,res) => {
     const _id = req.params.id
-    log(_id)
+    //log(_id)
 
     try{
         const user =  await User.findById(_id)
@@ -36,7 +35,7 @@ app.post('/users', async (req,res) => {
         await user.save()
         res.send(user)
     } catch (e){
-        res.send(e)
+        res.status(400).send(e)
     }
     
 })
@@ -82,6 +81,7 @@ app.delete('/users/:id', async (req,res) => {
     }
 })
 
+// Login User
 app.post('/users/login', async (req,res) => {
     //log(req.body.email, req.body.password)
     try{

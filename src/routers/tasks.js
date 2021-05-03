@@ -7,7 +7,7 @@ const app = new express.Router()
 app.get('/tasks', async (req,res) => {
     try{
         const task = await Task.find({})
-        res.send(task)
+        res.status(400).send(task)
     } catch (e) {
         res.send(e)
     }
@@ -21,11 +21,11 @@ app.get('/tasks/:id',  async (req,res) => {
     try{
         const task = await Task.findById(_id)
         if(!task){
-            return res.status(401).send('Task Not found')
+            return res.status(400).send('Task Not found')
         }
         res.send(task)
     } catch (e) {
-        res.send(e)
+        res.status(400).send(e)
     }
 })
 
@@ -38,12 +38,11 @@ app.post('/tasks', async (req,res) => {
         await task.save()
         res.send(task)
     } catch (e) {
-        res.send(e)
+        res.status(400).send(e)
     }
 })
 
 // Update task
-
 app.patch('/tasks/:id', async (req, res) => {
     const allowed = ["description","completed"]
     const keys = Object.keys(req.body)
@@ -69,7 +68,7 @@ app.patch('/tasks/:id', async (req, res) => {
         res.send(task)
 
     } catch(e) {
-        res.send(e)
+        res.status(400).send(e)
     }
 })
 
