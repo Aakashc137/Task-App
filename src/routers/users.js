@@ -1,47 +1,58 @@
 const log = console.log
 const express = require('express')
 const User = require('../models/users.js')
+const auth = require('../middleware/auth.js')
 const app = new express.Router()
 
-// Get All Users
-app.get('/users', async (req,res) => {
-    try{
-       const user =  await User.find({})
-        res.send(user)
-    } catch (e) {
-        res.status(400).send(e)
+// Read Profile
+app.get('/users/me',auth,async (req,res) => {
+    if(!req.user){
+        return res.status(400).send('User Not authenticated')
     }
+    res.send(req.user)
 })
 
-//Get Users By Id
-app.get('/users/:id', async (req,res) => {
-    const _id = req.params.id
-    //log(_id)
-
-    try{
-        const user =  await User.findById(_id)
-         res.send(user)
-     } catch (e) {
-         res.send(e)
-     }
-})
-
-// Create a New User
+// Sign Up
 app.post('/users', async (req,res) => {
 
     const user = new User(req.body)
     const token = await user.getAuthToken()
     try{
         await user.save()
-        res.send(user,token)
+        res.send({user, token})
     } catch (e){
         res.status(400).send(e)
     }
     
 })
 
+// Logout of a single device
+app.post('/users/logout', auth, async (req,res) => {
+    try{
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token != req.token
+        })
+        await req.user.save()
+
+        res.send()
+    } catch(e){
+        res.status(500).send(e)
+    }
+})
+
+// Logout of all Devices
+app.post('/users/logoutAll', auth, async (req,res) => {
+    try{
+        req.user.tokens = []
+        await req.user.save()
+        res.send('Logged out of all Devices')
+    } catch (e){
+        res.status(500).send('Could not Authenticate')
+    }
+})
+
 // Update a user
-app.patch('/users/:id', async (req,res) => {
+app.patch('/users/me', auth, async (req,res) => {
 
     const keys = Object.keys(req.body)
     const allowed = ["name", "age", "email", "password"]
@@ -51,31 +62,28 @@ app.patch('/users/:id', async (req,res) => {
         return res.status(400).send('Key Not found')
     }
     try{
-        const user = await User.findById(req.params.id)
+        //const user = await User.findById(req.params.id)
 
         keys.forEach((key) => {
-            user[key] = req.body[key] 
+            req.user[key] = req.body[key] 
         })
-
-        await user.save()
-
-        if(!user){
-            return res.status(400).send('User Not found')
-        }
-        res.send(user)
+        await req.user.save()
+        res.send(req.user)
     } catch (e) {
         res.status(400).send(e)
     }
 })
 
 // Delete a user
-app.delete('/users/:id', async (req,res) => {
+app.delete('/users/me', auth ,async (req,res) => {
     try{
-        const user = await User.findByIdAndDelete(req.params.id)
-        if(!user){
-            return res.status(400).send('User Not Found')
-        }
-        res.send(user)
+        // const user = await User.findByIdAndDelete(req.params.id)
+        // if(!user){
+        //     return res.status(400).send('User Not Found')
+        // }
+
+        await req.user.remove()
+        res.send(req.user)
     } catch(e) {
         res.status(400).send(e)
     }

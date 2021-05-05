@@ -1,27 +1,31 @@
 const log = console.log
 const express = require('express')
+const auth = require('../middleware/auth.js')
 const Task = require('../models/tasks.js')
 const app = new express.Router()
 
 //  Get all Tasks
-app.get('/tasks', async (req,res) => {
+app.get('/tasks', auth ,async (req,res) => {
     try{
-        const task = await Task.find({})
-        res.status(400).send(task)
+        const task = await Task.find({owner: req.user._id})
+        if(task.length==0){
+            return res.status(404).send('Tasks Not found')
+        }
+        res.status(200).send(task)
     } catch (e) {
         res.send(e)
     }
 })
 
 // Get tasks By Id
-app.get('/tasks/:id',  async (req,res) => {
+app.get('/tasks/:id', auth ,async (req,res) => {
     const _id = req.params.id
-    log(_id)
 
     try{
-        const task = await Task.findById(_id)
+        //const task = await Task.findById(_id)
+        const task = await Task.findOne({ _id, owner: req.user._id})
         if(!task){
-            return res.status(400).send('Task Not found')
+            return res.status(404).send('Task Not found')
         }
         res.send(task)
     } catch (e) {
@@ -30,9 +34,12 @@ app.get('/tasks/:id',  async (req,res) => {
 })
 
 // Make a New Task
-app.post('/tasks', async (req,res) => {
+app.post('/tasks',auth ,async (req,res) => {
 
-    const task = new Task(req.body)
+    const task = new Task({
+        ...req.body,
+        owner: req.user._id
+    })
 
     try{
         await task.save()
@@ -43,19 +50,21 @@ app.post('/tasks', async (req,res) => {
 })
 
 // Update task
-app.patch('/tasks/:id', async (req, res) => {
+app.patch('/tasks/:id', auth ,async (req, res) => {
+    const _id = req.params.id
     const allowed = ["description","completed"]
     const keys = Object.keys(req.body)
-    log(keys)
+    //log(keys)
     const keyIsValid = keys.every((key) => allowed.includes(key))
 
-    log(keyIsValid)
+    //log(keyIsValid)
+
     if(!keyIsValid){
         return res.status(400).send('Key not Found')
     }
 
     try{
-        const task = await Task.findById(req.params.id)
+        const task = await Task.findOne({ _id , owner: req.user._id})
 
         keys.forEach((key) => {
             task[key] = req.body[key]
@@ -73,9 +82,10 @@ app.patch('/tasks/:id', async (req, res) => {
 })
 
 // Delete Task
-app.delete('/tasks/:id', async (req,res) => {
+app.delete('/tasks/:id', auth,async (req,res) => {
     try{
-        const task = await Task.findByIdAndDelete(req.params.id)
+        const _id = req.params.id
+        const task = await Task.findOneAndDelete({_id, owner: req.user._id})
         if(!task){
             return res.status(400).send('Task Not Found')
         }

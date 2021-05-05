@@ -3,6 +3,7 @@ const log = console.log
 const validator = require('validator')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const Task = require('./tasks')
 
 const userSchema = mongoose.Schema(
     {
@@ -63,7 +64,7 @@ userSchema.statics.findByEmail = async (email, password) => {
     const isMatch = await bcrypt.compare(password, user.password)
 
     if(!isMatch){
-        log('Wrong Password')
+        //log('Wrong Password')
         throw new Error('Wrong Password')
     }
 
@@ -71,14 +72,30 @@ userSchema.statics.findByEmail = async (email, password) => {
     return user
 }
 
-userSchema.methods.getAuthToken = async function(_id) {
-    const token = jwt.sign({ _id: this._id.toString()},'Aakash')
-    log(token)
-    this.tokens = this.tokens.concat({token})
-    await this.save()
+userSchema.methods.toJSON = function() {
 
+    userObject = this.toObject()
+    //log(this)
+    delete userObject.password 
+    delete userObject.tokens 
+    //log(userObject)
+    return userObject
+}
+
+userSchema.methods.getAuthToken = async function() {
+    const token = jwt.sign({ _id: this._id.toString()},'Aakash')
+    this.tokens = this.tokens.concat({token})
+    
+    await this.save()
+    
     return token
 }
+
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner'
+})
 
 userSchema.pre('save', async function(next) {
 
@@ -86,6 +103,11 @@ userSchema.pre('save', async function(next) {
         this.password = await bcrypt.hash(this.password, 8)
     }
 
+    next()
+})
+
+userSchema.pre('remove', async function(next) {
+    await Task.deleteMany({owner: this._id})
     next()
 })
 
