@@ -7,11 +7,35 @@ const app = new express.Router()
 //  Get all Tasks
 app.get('/tasks', auth ,async (req,res) => {
     try{
-        const task = await Task.find({owner: req.user._id})
-        if(task.length==0){
-            return res.status(404).send('Tasks Not found')
+        match = {}
+        var limit
+        var skip
+        if(req.query.completed){
+            match.completed = req.query.completed === 'true'
         }
-        res.status(200).send(task)
+
+        if(req.query.limit){
+            limit = req.query.limit
+        }
+
+        if(req.query.skip){
+            skip = req.query.skip
+        }
+
+
+        await req.user.populate({
+            path : 'tasks',
+            match,
+            options : {
+                limit : parseInt(limit),
+                skip : parseInt(skip)
+            }
+        }).execPopulate()
+        // const task = await Task.find({owner: req.user._id})
+        // if(task.length==0){
+        //     return res.status(404).send('Tasks Not found')
+        // }
+        res.status(200).send(req.user.tasks)
     } catch (e) {
         res.send(e)
     }
