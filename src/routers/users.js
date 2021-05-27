@@ -1,7 +1,10 @@
 const log = console.log
 const express = require('express')
+const multer = require('multer')
 const User = require('../models/users.js')
 const auth = require('../middleware/auth.js')
+const sharp = require('sharp')
+const { sendWelcomeEmail, sendCancellationEmail } = require('../email/account.js')
 const app = new express.Router()
 
 // Read Profile
@@ -23,6 +26,8 @@ app.post('/users', async (req,res) => {
     } catch (e){
         res.status(400).send(e)
     }
+
+    sendWelcomeEmail(user.email, user.name)
     
 })
 
@@ -83,10 +88,13 @@ app.delete('/users/me', auth ,async (req,res) => {
         // }
 
         await req.user.remove()
+        sendCancellationEmail(req.user.email, req.user.name)
         res.send(req.user)
     } catch(e) {
         res.status(400).send(e)
     }
+
+    
 })
 
 // Login User
@@ -102,6 +110,55 @@ app.post('/users/login', async (req,res) => {
     }
 
 })
+
+const upload = multer({
+    limits : {
+        fileSize: 1000000
+    },
+    fileFilter(req,file,cb){
+
+        if(!file.originalname.match(/\.(jpg|png|jpeg)$/)){
+            return cb(new Error('Extension should be PNG or JPG'))
+        } 
+        cb(undefined, true)  
+    }
+})
+
+app.post('/users/me/avatar', auth ,upload.single('avatar'), async (req, res) => {
+    const buffer = await sharp(req.file.buffer).resize({width : 250, height : 250}).png().toBuffer()
+    req.user.avatar = buffer
+    await req.user.save()
+    res.status(200).send()
+}, (error, req, res, next) => {
+    res.status(400).send({error: error.message})
+})
+
+app.delete('/users/me/avatar', auth, async (req, res) => {
+    try{
+        req.user.avatar = undefined
+        await req.user.save()
+        res.status(200).send()
+    } catch (e) {
+        res.status(400).send("There was a problem deleting the avatar")
+    }
+    
+})
+
+app.get('/users/:id/avatar', async (req, res) => {
+    try{
+        const user = await User.findById(req.params.id)
+        if(!user || !user.avatar){
+            throw new Error()
+        }
+
+        res.set('Content-Type', 'image/png')
+        res.send(user.avatar)
+    }catch(e){
+        res.status(400).send("Error")
+    }
+    
+})
+
 
 module.exports = app
 
